@@ -17,14 +17,14 @@ class Image(path: String) {
         require(x in 0 until width)
         require(y in 0 until height)
         val rgb = buffer.getRGB(x, y)
-        val r: Int = (rgb shr 16) and 0xFF
-        val g: Int = (rgb shr 8) and 0xFF
-        val b: Int = rgb and 0xFF
-        return Pixel(x, y, r, g, b)
+        val red: Int = (rgb shr 16) and 0xFF
+        val green: Int = (rgb shr 8) and 0xFF
+        val blue: Int = rgb and 0xFF
+        return Pixel(x, y, red, green, blue)
     }
 
     fun updatePixel(pixel: Pixel) {
-        val rgb = (pixel.r shl 16) or (pixel.g shl 8) or pixel.b
+        val rgb = (pixel.red shl 16) or (pixel.green shl 8) or pixel.blue
         buffer.setRGB(pixel.x, pixel.y, rgb)
     }
 
@@ -32,38 +32,39 @@ class Image(path: String) {
         val file = File(filename)
         ImageIO.write(buffer, "png", file)
     }
-
 }
 
-data class Pixel(val x: Int, val y: Int, var r: Int, var g: Int, var b: Int) {
+enum class Colour {
+    Red, Green, Blue
+}
 
-    fun modify(colour: Char, index: Int, value: Char) {
-        require(value in listOf('0', '1'))
-        require(colour in listOf('r', 'g', 'b'))
+data class Pixel(val x: Int, val y: Int, var red: Int, var green: Int, var blue: Int) {
+
+    fun modify(colour: Colour, index: Int, bit: Int) {
         require(index in 0..7)
+        require(bit in 0..1)
         when (colour) {
-            'r' -> r = modify(r, index, value)
-            'g' -> g = modify(g, index, value)
-            'b' -> b = modify(b, index, value)
+            Colour.Red -> red = update(red, index, bit)
+            Colour.Green -> green = update(green, index, bit)
+            Colour.Blue -> blue = update(blue, index, bit)
         }
     }
 
-    private fun modify(colour: Int, index: Int, value: Char): Int {
+    private fun update(colour: Int, index: Int, bit: Int): Int {
         val mask = 1 shl (7 - index)
-        return if (value == '1') {
+        return if (bit == 1) {
             colour or mask
         } else {
             colour and mask.inv()
         }
     }
-
 }
 
 fun main() {
     val image = Image("images/test.jpg")
     val pixel = image.getPixel(10, 10)
-    pixel.modify('r', 0, '0')
-    pixel.modify('g', 0, '0')
+    pixel.modify(Colour.Red, 0, 0)
+    pixel.modify(Colour.Green, 0, 0)
     image.updatePixel(pixel)
     image.save("images/jesus.png")
 
